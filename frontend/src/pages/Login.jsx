@@ -1,14 +1,20 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 const Login = () => {
+
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Handle Input Change
   const handleChange = (e) => {
@@ -16,89 +22,154 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+
+    // Remove old message while typing
+    setMessage("");
   };
 
   // Handle Login
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setLoading(true);
+
     try {
+
       const response = await axios.post(
         "http://localhost:5000/api/auth/login",
         formData
       );
 
-      setMessage(response.data.message);
+      // Success UI
+      setSuccess(true);
+      setMessage(response.data.message || "Login Successful");
 
-      // Save token if backend sends token
+      // Save token
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
       }
 
-      // Clear form
-      setFormData({
-        email: "",
-        password: "",
-      });
+      // Redirect after 1 second
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
 
     } catch (error) {
+
+      // Error UI
+      setSuccess(false);
+
       setMessage(
         error.response?.data?.message || "Invalid Credentials"
       );
+
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
 
-      <div className="bg-white p-8 rounded-xl shadow-lg w-[400px]">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-200">
 
-        <h1 className="text-3xl font-bold text-center mb-6">
-          Login
+        {/* Heading */}
+        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
+          Welcome Back
         </h1>
 
+        <p className="text-center text-gray-500 mb-6">
+          Login to continue
+        </p>
+
+        {/* Message UI */}
         {message && (
-          <p className="text-center mb-4 text-blue-600">
+          <div
+            className={`mb-5 p-3 rounded-lg text-center font-medium transition-all duration-300 ${
+              success
+                ? "bg-green-100 text-green-700 border border-green-300"
+                : "bg-red-100 text-red-700 border border-red-300"
+            }`}
+          >
             {message}
-          </p>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
 
           {/* Email */}
-          <input
-            type="email"
-            name="email"
-            placeholder="Enter Email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Email
+            </label>
+
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full border p-3 rounded-xl outline-none transition-all ${
+                message && !success
+                  ? "border-red-400 focus:ring-red-300"
+                  : "border-gray-300 focus:ring-blue-300"
+              } focus:ring-2`}
+              required
+            />
+          </div>
 
           {/* Password */}
-          <input
-            type="password"
-            name="password"
-            placeholder="Enter Password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-700">
+              Password
+            </label>
 
-          {/* Button */}
+            <div className="relative">
+
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full border p-3 rounded-xl outline-none transition-all pr-20 ${
+                  message && !success
+                    ? "border-red-400 focus:ring-red-300"
+                    : "border-gray-300 focus:ring-blue-300"
+                } focus:ring-2`}
+                required
+              />
+
+              {/* Show Password Button */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-sm text-blue-600 font-medium hover:text-blue-800"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+
+            </div>
+          </div>
+
+          {/* Login Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-300"
+            disabled={loading}
+            className={`w-full p-3 rounded-xl text-white font-semibold transition-all duration-300 ${
+              loading
+                ? "bg-blue-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 hover:scale-[1.02]"
+            }`}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </button>
 
         </form>
 
         {/* Signup Link */}
-        <p className="text-center mt-5 text-gray-600">
+        <p className="text-center mt-6 text-gray-600">
           Don't have an account?
         </p>
 
