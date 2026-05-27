@@ -1,4 +1,4 @@
-import Product from "../modals/Product.js";
+import Product from "../models/Product.js";
 
 
 // Create Product
@@ -162,5 +162,28 @@ export const deleteProduct = async (req, res) => {
       success: false,
       message: "Error deleting product",
     });
+  }
+};
+
+export const createManyProducts = async (req, res) => {
+  try {
+
+    const products = await Product.insertMany(req.body);
+
+    res.status(201).json({
+      success: true,
+      message: "Products added successfully",
+      products,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Error adding products",
+    });
+
   }
 };
