@@ -46,8 +46,17 @@ export const createProduct = async (req, res) => {
 // Get All Products
 export const getProducts = async (req, res) => {
   try {
+    const { search,category } = req.query;
+    let query = {};
 
-    const products = await Product.find();
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    } 
+    if (category) {
+      query.category = category;
+    }
+
+    const products = await Product.find(query);
 
     res.status(200).json({
       success: true,
